@@ -1,0 +1,35 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import matplotlib.pyplot as plt
+data = pd.read_csv("bitcoin_data.csv")  # Replace with your dataset path
+data['Date'] = pd.to_datetime(data['Date'])
+data.set_index('Date', inplace=True)
+data = data[['Close']]
+data['MA_7'] = data['Close'].rolling(window=7).mean()
+data['MA_30'] = data['Close'].rolling(window=30).mean()
+data['MA_90'] = data['Close'].rolling(window=90).mean()
+X = data[['MA_7', 'MA_30', 'MA_90']]
+y = data['Close']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+mae = mean_absolute_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+rmse = np.sqrt(mse)
+print(f"Mean Absolute Error: {mae}")
+print(f"Root Mean Squared Error: {rmse}")
+plt.figure(figsize=(14, 7))
+plt.plot(y_test.index, y_test, label="Actual Price", color='b')
+plt.plot(y_test.index, y_pred, label="Predicted Price", color='r')
+plt.xlabel("Date")
+plt.ylabel("Bitcoin Price")
+plt.title("Actual vs Predicted Bitcoin Prices")
+plt.legend()
+plt.show()
+new_data = data.tail(1)[['MA_7', 'MA_30', 'MA_90']]
+future_price_prediction = model.predict(new_data)
+print("Predicted Future Price:", future_price_prediction)
